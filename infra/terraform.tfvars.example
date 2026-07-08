@@ -1,0 +1,13 @@
+aws_region = "us-east-1"
+
+stripe_api_key  = "sk_test_..."
+stripe_api_base = "https://api.stripe.com"
+
+xero_client_id     = ""
+xero_client_secret = ""
+xero_access_token  = ""
+xero_tenant_id     = ""
+xero_api_base      = "https://api.xero.com"
+
+anthropic_api_key  = ""
+anthropic_api_base = "https://api.anthropic.com"

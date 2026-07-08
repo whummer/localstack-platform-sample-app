@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.env
+build/
+.venv/
+venv/
+
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+infra/local.auto.tfvars
+infra/terraform.tfvars
