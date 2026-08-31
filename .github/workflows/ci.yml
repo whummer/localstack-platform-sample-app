@@ -34,15 +34,13 @@ jobs:
       - name: Install lstk-project
         run: pip install "https://localstack-artifacts-internal.s3.eu-central-1.amazonaws.com/packages/lstk-project/lstk_project-0.1.1-py3-none-any.whl"
 
-      # This single command starts LocalStack, resolves the project config for
-      # test-whummer, and installs/configures the LocalStack Extensions the app
-      # needs (mock Stripe, Xero and Anthropic endpoints). No manual setup.
-      - name: Start LocalStack project
+      # make deploy-local's local-up target runs "lstk project start" itself
+      # (resolving test-whummer's config and installing/configuring the
+      # LocalStack Extensions the app needs), so there's no separate start
+      # step here - just make sure the auth token is in scope for it.
+      - name: Deploy to LocalStack
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
-        run: lstk project start test-whummer
-
-      - name: Deploy to LocalStack
         run: make deploy-local PROJECT_ID=test-whummer
 
       - name: Run tests
@@ -50,4 +48,6 @@ jobs:
 
       - name: Stop LocalStack project
         if: always()
-        run: lstk project stop test-whummer
+        env:
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+        run: lstk project shutdown test-whummer --status ${{ job.status }}
