@@ -46,6 +46,7 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
 
       - name: Deploy infrastructure (Terraform)
+        working-directory: "infra"
         run: |
           lstk terraform init && lstk terraform apply -auto-approve
 
