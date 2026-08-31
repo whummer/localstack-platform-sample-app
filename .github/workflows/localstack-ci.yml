@@ -23,29 +23,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Preview of the standalone localstack/github-oidc-action - for now
+      # this lives in-repo at .github/actions/localstack-oidc-auth.
       - name: Authenticate to LocalStack via GitHub OIDC
-        env:
-          LOCALSTACK_OIDC_AUDIENCE: https://v2.api.localstack.cloud/github-oidc
-          LOCALSTACK_PLATFORM_API_URL: https://v2.api.localstack.cloud
-          LOCALSTACK_ORG_ID: "1e09b0c1"
-          LOCALSTACK_PROJECT: "proj_261c6282"
-        run: |
-          OIDC_TOKEN=$(curl -sSf \
-            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${LOCALSTACK_OIDC_AUDIENCE}" \
-            | jq -r .value)
-
-          PAYLOAD=$(jq -n \
-            --arg token "$OIDC_TOKEN" \
-            --arg orgId "$LOCALSTACK_ORG_ID" \
-            --arg project "$LOCALSTACK_PROJECT" \
-            '{token: $token, orgId: $orgId, project: $project}')
-
-          RESPONSE=$(curl -sSf -X POST "${LOCALSTACK_PLATFORM_API_URL}/v1/auth/github-oidc" \
-            -H "Content-Type: application/json" \
-            -d "$PAYLOAD")
-
-          echo "LOCALSTACK_AUTH_TOKEN=$(echo "$RESPONSE" | jq -r .localstackAuthToken)" >> "$GITHUB_ENV"
+        uses: ./.github/actions/localstack-oidc-auth
+        with:
+          org-id: "1e09b0c1"
+          project: "proj_261c6282"
 
       - uses: actions/setup-python@v5
         with:
