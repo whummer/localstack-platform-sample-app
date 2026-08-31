@@ -30,7 +30,7 @@ jobs:
       - name: Install tflocal
         run: pip install terraform-local
 
-      - name: Install lstk CLI
+      - name: Install the lstk CLI
         run: npm install -g @localstack/lstk
 
       # @localstack/lstk is just the base CLI - the "project" subcommand
@@ -38,11 +38,6 @@ jobs:
       - name: Install lstk-project
         run: pip install "https://localstack-artifacts-internal.s3.eu-central-1.amazonaws.com/packages/lstk-project/lstk_project-0.1.1-py3-none-any.whl"
 
-      # No LOCALSTACK_AUTH_TOKEN repository secret needed anymore - this
-      # exchanges a GitHub identity token for one scoped to test-whummer and
-      # exports it into $GITHUB_ENV, so every later step picks it up on its
-      # own (that's why "Deploy to LocalStack" and "Stop LocalStack project"
-      # below no longer carry their own env: block for it).
       - name: Authenticate to LocalStack via GitHub OIDC
         uses: ./.github/actions/localstack-oidc-auth
         with:
