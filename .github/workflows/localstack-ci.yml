@@ -27,13 +27,9 @@ jobs:
         run: |
           OIDC_TOKEN=$(curl -sSf -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https://v2.api.localstack.cloud/github-oidc" | jq -r .value)
           echo "DEBUG: OIDC_TOKEN length=${#OIDC_TOKEN}, aud/iss/ref claims:"
-          python3 -c "
-import base64, json, sys
-seg = '$OIDC_TOKEN'.split('.')[1]
-seg += '=' * (-len(seg) % 4)
-claims = json.loads(base64.urlsafe_b64decode(seg))
-print(json.dumps({k: claims.get(k) for k in ('aud', 'iss', 'ref', 'repository', 'sub')}, indent=2))
-" || echo "(could not decode claims)"
+          CLAIMS_SEG=$(echo "$OIDC_TOKEN" | cut -d. -f2 | tr '_-' '/+')
+          CLAIMS_SEG="${CLAIMS_SEG}$(printf '=%.0s' $(seq 1 $(( (4 - ${#CLAIMS_SEG} % 4) % 4 ))))"
+          echo "$CLAIMS_SEG" | base64 -d 2>/dev/null | jq '{aud,iss,ref,repository,sub}' || echo "(could not decode claims)"
           PAYLOAD=$(jq -n --arg token "$OIDC_TOKEN" --arg orgId "1e09b0c1" --arg project "proj_261c6282" '{token: $token, orgId: $orgId, project: $project}')
           HTTP_RESPONSE=$(curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST "https://v2.api.localstack.cloud/v1/auth/github-oidc" -H "Content-Type: application/json" -d "$PAYLOAD")
           BODY=$(echo "$HTTP_RESPONSE" | sed '$d')
