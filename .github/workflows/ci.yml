@@ -27,22 +27,22 @@ jobs:
         run: pip install terraform-local
 
       - name: Install lstk CLI
-        run: curl -Ls https://cli.localstack.cloud/lstk/install | sh
+        run: npm install -g @localstack/lstk
 
       # This single command starts LocalStack, resolves the project config for
-      # my-prj-123, and installs/configures the LocalStack Extensions the app
+      # test-whummer, and installs/configures the LocalStack Extensions the app
       # needs (mock Stripe, Xero and Anthropic endpoints). No manual setup.
       - name: Start LocalStack project
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
-        run: lstk project start my-prj-123
+        run: lstk project start test-whummer
 
       - name: Deploy to LocalStack
-        run: make deploy-local
+        run: make deploy-local PROJECT_ID=test-whummer
 
       - name: Run tests
         run: make test
 
       - name: Stop LocalStack project
         if: always()
-        run: lstk project stop my-prj-123
+        run: lstk project stop test-whummer
