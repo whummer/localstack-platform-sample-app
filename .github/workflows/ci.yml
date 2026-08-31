@@ -29,6 +29,11 @@ jobs:
       - name: Install lstk CLI
         run: npm install -g @localstack/lstk
 
+      # @localstack/lstk is just the base CLI - the "project" subcommand
+      # itself comes from this separate plugin.
+      - name: Install lstk-project
+        run: pip install "https://localstack-artifacts-internal.s3.eu-central-1.amazonaws.com/packages/lstk-project/lstk_project-0.1.1-py3-none-any.whl"
+
       # This single command starts LocalStack, resolves the project config for
       # test-whummer, and installs/configures the LocalStack Extensions the app
       # needs (mock Stripe, Xero and Anthropic endpoints). No manual setup.
