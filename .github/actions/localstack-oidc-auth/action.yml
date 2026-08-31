@@ -57,6 +57,10 @@ runs:
           -d "$PAYLOAD")
 
         TOKEN=$(echo "$RESPONSE" | jq -r .localstackAuthToken)
+        if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+          echo "::error::Platform response had no localstackAuthToken field"
+          exit 1
+        fi
         echo "::add-mask::$TOKEN"
         echo "LOCALSTACK_AUTH_TOKEN=$TOKEN" >> "$GITHUB_ENV"
         echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
