@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   test-against-localstack:
     runs-on: ubuntu-latest
@@ -34,13 +38,21 @@ jobs:
       - name: Install lstk-project
         run: pip install "https://localstack-artifacts-internal.s3.eu-central-1.amazonaws.com/packages/lstk-project/lstk_project-0.1.1-py3-none-any.whl"
 
+      # No LOCALSTACK_AUTH_TOKEN repository secret needed anymore - this
+      # exchanges a GitHub identity token for one scoped to test-whummer and
+      # exports it into $GITHUB_ENV, so every later step picks it up on its
+      # own (that's why "Deploy to LocalStack" and "Stop LocalStack project"
+      # below no longer carry their own env: block for it).
+      - name: Authenticate to LocalStack via GitHub OIDC
+        uses: ./.github/actions/localstack-oidc-auth
+        with:
+          org-id: "1e09b0c1"
+          project: "test-whummer"
+
       # make deploy-local's local-up target runs "lstk project start" itself
       # (resolving test-whummer's config and installing/configuring the
-      # LocalStack Extensions the app needs), so there's no separate start
-      # step here - just make sure the auth token is in scope for it.
+      # LocalStack Extensions the app needs).
       - name: Deploy to LocalStack
-        env:
-          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
         run: make deploy-local PROJECT_ID=test-whummer
 
       - name: Run tests
@@ -48,6 +60,4 @@ jobs:
 
       - name: Stop LocalStack project
         if: always()
-        env:
-          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
         run: lstk project shutdown test-whummer --status ${{ job.status }}
