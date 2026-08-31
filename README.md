@@ -38,16 +38,16 @@ For local runs, these `*_API_BASE` values get pointed at LocalStack Extension en
 You don't need to install or configure any LocalStack Extensions by hand. The `lstk` CLI fetches this project's config and sets everything up for you (LocalStack itself, the required extensions, and the local endpoint URLs/credentials for Stripe, Xero, and Anthropic).
 
 ```bash
-make deploy-local PROJECT_ID=my-prj-123
+make deploy-local PROJECT_ID=test-whummer
 ```
 
-This runs `lstk project start my-prj-123` to bring up LocalStack with the right extensions configured, then deploys the app with `tflocal`. When you're done:
+This runs `lstk project start test-whummer` to bring up LocalStack with the right extensions configured, then deploys the app with `tflocal`. When you're done:
 
 ```bash
-make local-down PROJECT_ID=my-prj-123
+make local-down PROJECT_ID=test-whummer
 ```
 
-This is also exactly what CI does - see `.github/workflows/ci.yml`. The whole pipeline is just: install `lstk`, run `lstk project start my-prj-123`, deploy, test, tear down.
+This is also exactly what CI does - see `.github/workflows/ci.yml`. The whole pipeline is just: authenticate via GitHub OIDC, install `lstk`, run `lstk project start test-whummer`, deploy, test, tear down.
 
 ## Deploying to real AWS
 

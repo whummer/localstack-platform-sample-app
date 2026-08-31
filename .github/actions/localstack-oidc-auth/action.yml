@@ -1,0 +1,62 @@
+name: 'LocalStack GitHub OIDC Auth'
+description: >-
+  Exchanges a GitHub Actions OIDC token for a short-lived LocalStack CI Auth
+  Token, scoped to one LocalStack platform project, and exports it as
+  LOCALSTACK_AUTH_TOKEN for every later step in the job.
+
+# Preview of the standalone `localstack/github-oidc-action` this is meant to
+# become (see openspec/changes/github-actions-oidc/ on the platform repo) -
+# living here first, in the consuming repo, lets us validate the `with:`
+# shape end to end before publishing and versioning it for real.
+
+inputs:
+  org-id:
+    description: 'LocalStack platform org id.'
+    required: true
+  project:
+    description: "The platform project's configId or (org-unique) name."
+    required: true
+  audience:
+    description: 'OIDC audience the platform expects the token to carry.'
+    required: false
+    default: 'https://v2.api.localstack.cloud/github-oidc'
+  platform-api-url:
+    description: 'Base URL of the LocalStack platform API.'
+    required: false
+    default: 'https://v2.api.localstack.cloud'
+
+outputs:
+  localstack-auth-token:
+    description: 'The exchanged, short-lived LocalStack CI Auth Token.'
+    value: ${{ steps.exchange.outputs.token }}
+
+runs:
+  using: 'composite'
+  steps:
+    - id: exchange
+      shell: bash
+      env:
+        LOCALSTACK_OIDC_AUDIENCE: ${{ inputs.audience }}
+        LOCALSTACK_PLATFORM_API_URL: ${{ inputs.platform-api-url }}
+        LOCALSTACK_ORG_ID: ${{ inputs.org-id }}
+        LOCALSTACK_PROJECT: ${{ inputs.project }}
+      run: |
+        OIDC_TOKEN=$(curl -sSf \
+          -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+          "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${LOCALSTACK_OIDC_AUDIENCE}" \
+          | jq -r .value)
+
+        PAYLOAD=$(jq -n \
+          --arg token "$OIDC_TOKEN" \
+          --arg orgId "$LOCALSTACK_ORG_ID" \
+          --arg project "$LOCALSTACK_PROJECT" \
+          '{token: $token, orgId: $orgId, project: $project}')
+
+        RESPONSE=$(curl -sSf -X POST "${LOCALSTACK_PLATFORM_API_URL}/v1/auth/github-oidc" \
+          -H "Content-Type: application/json" \
+          -d "$PAYLOAD")
+
+        TOKEN=$(echo "$RESPONSE" | jq -r .localstackAuthToken)
+        echo "::add-mask::$TOKEN"
+        echo "LOCALSTACK_AUTH_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+        echo "token=$TOKEN" >> "$GITHUB_OUTPUT"

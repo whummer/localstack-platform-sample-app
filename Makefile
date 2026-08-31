@@ -1,4 +1,4 @@
-PROJECT_ID ?= my-prj-123
+PROJECT_ID ?= test-whummer
 
 .PHONY: build local-up local-down deploy-local deploy-aws test clean
 
@@ -12,7 +12,7 @@ local-up:
 	lstk project start $(PROJECT_ID)
 
 local-down:
-	lstk project stop $(PROJECT_ID)
+	lstk project shutdown $(PROJECT_ID)
 
 # lstk writes infra/local.auto.tfvars with the local endpoint URLs and demo
 # credentials, which tflocal automatically picks up.

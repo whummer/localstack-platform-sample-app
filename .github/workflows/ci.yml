@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   test-against-localstack:
     runs-on: ubuntu-latest
@@ -26,23 +30,29 @@ jobs:
       - name: Install tflocal
         run: pip install terraform-local
 
-      - name: Install lstk CLI
-        run: curl -Ls https://cli.localstack.cloud/lstk/install | sh
+      - name: Install the lstk CLI
+        run: npm install -g @localstack/lstk
 
-      # This single command starts LocalStack, resolves the project config for
-      # my-prj-123, and installs/configures the LocalStack Extensions the app
-      # needs (mock Stripe, Xero and Anthropic endpoints). No manual setup.
-      - name: Start LocalStack project
-        env:
-          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
-        run: lstk project start my-prj-123
+      # @localstack/lstk is just the base CLI - the "project" subcommand
+      # itself comes from this separate plugin.
+      - name: Install lstk-project
+        run: pip install "https://localstack-artifacts-internal.s3.eu-central-1.amazonaws.com/packages/lstk-project/lstk_project-0.1.1-py3-none-any.whl"
 
+      - name: Authenticate to LocalStack via GitHub OIDC
+        uses: ./.github/actions/localstack-oidc-auth
+        with:
+          org-id: "1e09b0c1"
+          project: "test-whummer"
+
+      # make deploy-local's local-up target runs "lstk project start" itself
+      # (resolving test-whummer's config and installing/configuring the
+      # LocalStack Extensions the app needs).
       - name: Deploy to LocalStack
-        run: make deploy-local
+        run: make deploy-local PROJECT_ID=test-whummer
 
       - name: Run tests
         run: make test
 
       - name: Stop LocalStack project
         if: always()
-        run: lstk project stop my-prj-123
+        run: lstk project shutdown test-whummer --status ${{ job.status }}
