@@ -48,7 +48,7 @@ jobs:
       - name: Deploy infrastructure (Terraform)
         working-directory: "infra"
         run: |
-          lstk terraform init && lstk terraform apply -auto-approve
+          ../scripts/build_lambda.sh && lstk terraform init && lstk terraform apply -auto-approve
 
       # No test command configured on the platform yet - this step just
       # verifies the emulator came up. Set one on the project, then use
